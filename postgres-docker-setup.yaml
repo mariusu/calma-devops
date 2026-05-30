@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # 1. Reverse Proxy (Caddy)
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - API_DOMAIN=${API_DOMAIN}
+      - ADMIN_DOMAIN=${ADMIN_DOMAIN}
+      - SYNC_DOMAIN=${SYNC_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - postgrest
+      - pgadmin
+      - powersync
+
+  # 2. PostgreSQL Databasen
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    command: postgres -c wal_level=logical
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGRST_AUTHENTICATOR_PASSWORD: ${PGRST_AUTHENTICATOR_PASSWORD} # Sendes til init-db.sh
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}                 # Sendes til init-db.sh
+    volumes:
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh       # Lagt til som .sh i stedet for .sql
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 3. Sidecar for å hente og rotere Googles offentlige nøkler
+  jwks-sync:
+    image: alpine:latest
+    container_name: jwks_sync
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - jwks_certs:/certs
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+    entrypoint: >
+      sh -c "
+      apk add --no-cache curl postgresql-client &&
+      sleep 2 &&
+      while true; do
+        curl -s https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com > /certs/jwks.json;
+        psql -h db -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c \"NOTIFY pgrst, 'reload config';\";
+        sleep 43200;
+      done
+      "
+    restart: unless-stopped
+
+  # 4. PostgREST Serveren
+  postgrest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: postgrest_api
+    environment:
+      PGRST_DB_URI: "postgres://authenticator:${PGRST_AUTHENTICATOR_PASSWORD}@db:5432/${POSTGRES_DB}"
+      PGRST_DB_SCHEMAS: "api"
+      PGRST_DB_ANON_ROLE: "anon"
+      PGRST_JWT_SECRET: "@/certs/jwks.json"
+      PGRST_DB_PRE_REQUEST: "api.check_firebase_auth"
+    volumes:
+      - jwks_certs:/certs:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      jwks-sync:
+        condition: service_started
+    restart: unless-stopped
+
+  # 5. PowerSync Service
+  powersync:
+    image: journeyapps/powersync-service:latest
+    container_name: powersync_sync
+    command: ["start", "-r", "unified"]
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/service.yaml
+      # Vi bygger tilkoblingsstrengen og sender inn variablene PowerSync trenger i sin service.yaml
+      POWERSYNC_DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+    volumes:
+      - ./powersync:/config
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 6. Admin-verktøy (pgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_ui
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  jwks_certs:
+  caddy_data:
+  caddy_config:

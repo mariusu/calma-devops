@@ -1,0 +1,11 @@
+{$API_DOMAIN} {
+    reverse_proxy postgrest:3000
+}
+
+{$ADMIN_DOMAIN} {
+    reverse_proxy pgadmin:80
+}
+
+{$SYNC_DOMAIN} {
+    reverse_proxy powersync:8080
+}
