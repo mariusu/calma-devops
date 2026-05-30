@@ -89,7 +89,7 @@ services:
 
   # 5. PowerSync Service
   powersync:
-    image: journeyapps/powersync-service:latest
+    image: journeyapps/powersync-service:1.21.0
     container_name: powersync_sync
     command: ["start", "-r", "unified"]
     environment:
