@@ -1,6 +1,6 @@
 config:
   edition: 3
-  streams:
-    todos:
-      auto_subscribe: true
-      query: SELECT * FROM todos
+streams:
+  todos:
+    auto_subscribe: true
+    query: SELECT * FROM todos
