@@ -49,6 +49,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     END;
     \$\$ LANGUAGE plpgsql SECURITY DEFINER;
 
-    -- 4. Opprett publikasjon for PowerSync
+    -- 4. Opprett publikasjon for PowerSync (Dont use ALL TABLES here, as it will cause issues when we add more tables in the future. Instead, we can add tables to the publication as needed)
     CREATE PUBLICATION powersync FOR ALL TABLES;
+    -- ALTER PUBLICATION powersync ADD TABLE todos_test;
 EOSQL

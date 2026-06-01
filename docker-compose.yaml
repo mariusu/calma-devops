@@ -21,6 +21,11 @@ services:
       - postgrest
       - pgadmin
       - powersync
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)    
 
   # 2. PostgreSQL Databasen
   db:
@@ -44,6 +49,11 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)    
 
   # 3. Sidecar for å hente og rotere Googles offentlige nøkler
   jwks-sync:
@@ -67,6 +77,11 @@ services:
       done
       "
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)    
 
   # 4. PostgREST Serveren
   postgrest:
@@ -86,6 +101,11 @@ services:
       jwks-sync:
         condition: service_started
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)    
 
   # 5. PowerSync Service
   powersync:
@@ -103,6 +123,11 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)    
 
   # 6. Admin-verktøy (pgAdmin)
   pgadmin:
@@ -114,7 +139,13 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)      
 
+# Volumes stored under /var/lib/docker/volumes on the host machine
 volumes:
   postgres_data:
   pgadmin_data:
