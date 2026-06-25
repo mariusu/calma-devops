@@ -11,9 +11,9 @@
 }
 
 {$AUTH_DOMAIN} {
-    reverse_proxy logtoauth:3001
+    reverse_proxy logto:3001
 }
 
 {$AUTH_ADMIN_DOMAIN} {
-    reverse_proxy logtoadmin:3002
+    reverse_proxy logto:3002
 }
