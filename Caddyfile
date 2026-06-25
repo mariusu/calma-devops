@@ -1,19 +1,19 @@
-{$API_DOMAIN} {
+api.spinnaker.sysdesign.no {
     reverse_proxy postgrest:3000
 }
 
-{$ADMIN_DOMAIN} {
+admin.spinnaker.sysdesign.no {
     reverse_proxy pgadmin:80
 }
 
-{$SYNC_DOMAIN} {
+sync.spinnaker.sysdesign.no {
     reverse_proxy powersync:8080
 }
 
-{$AUTH_DOMAIN} {
+auth.spinnaker.sysdesign.no {
     reverse_proxy logto:3001
 }
 
-{$AUTH_ADMIN_DOMAIN} {
+auth-admin.spinnaker.sysdesign.no {
     reverse_proxy logto:3002
 }
