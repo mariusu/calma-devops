@@ -9,9 +9,11 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - API_DOMAIN=${API_DOMAIN}
-      - ADMIN_DOMAIN=${ADMIN_DOMAIN}
-      - SYNC_DOMAIN=${SYNC_DOMAIN}
+      - API_DOMAIN=api.spinnaker.sysdesign.no
+      - ADMIN_DOMAIN=admin.spinnaker.sysdesign.no
+      - SYNC_DOMAIN=sync.spinnaker.sysdesign.no
+      - AUTH_DOMAIN=auth.spinnaker.sysdesign.no
+      - AUTH_ADMIN_DOMAIN=auth-admin.spinnaker.sysdesign.no
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -31,7 +33,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: postgres_db
-    command: postgres -c wal_level=logical
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_slot_wal_keep_size=5GB"]  #postgres -c wal_level=logical
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -144,6 +146,32 @@ services:
       options:
         max-size: "5m"     # Roterer loggen når den når 5 MB
         max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)      
+
+  logto:
+    image: ghcr.io/logto-io/logto:cloud-prod-d381049  #svhd/logto:latest
+    container_name: logto_auth
+    entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
+    ports:
+      - 3001:3001
+      - 3002:3002
+    environment:
+      - TRUST_PROXY_HEADER=1
+      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/logto # postgres://postgres:p0stgr3s@postgres:5432/logto
+      # Optional default grace period, in seconds, for OIDC private key rotation when the API
+      # request omits `rotationGracePeriod`.
+      # - PRIVATE_KEY_ROTATION_GRACE_PERIOD
+      # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
+      # Or, you can leverage it for local testing.
+      - ENDPOINT=http://localhost:3001
+      - ADMIN_ENDPOINT=http://localhost:3002
+    depends_on:
+      db:
+        condition: service_healthy      
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # Roterer loggen når den når 5 MB
+        max-file: "3"      # Behold maks 3 roterte loggfiler (totalt 4 filer medregnet den aktive)       
 
 # Volumes stored under /var/lib/docker/volumes on the host machine
 volumes:

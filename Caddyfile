@@ -9,3 +9,11 @@
 {$SYNC_DOMAIN} {
     reverse_proxy powersync:8080
 }
+
+{$AUTH_DOMAIN} {
+    reverse_proxy logtoauth:3001
+}
+
+{$AUTH_ADMIN_DOMAIN} {
+    reverse_proxy logtoadmin:3002
+}
