@@ -162,8 +162,8 @@ services:
       # - PRIVATE_KEY_ROTATION_GRACE_PERIOD
       # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
       # Or, you can leverage it for local testing.
-      - ENDPOINT=http://localhost:3001
-      - ADMIN_ENDPOINT=http://localhost:3002
+      #- ENDPOINT=http://localhost:3001
+      #- ADMIN_ENDPOINT=http://localhost:3002
     depends_on:
       db:
         condition: service_healthy      
