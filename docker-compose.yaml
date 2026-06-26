@@ -166,6 +166,7 @@ services:
     depends_on:
       db:
         condition: service_healthy      
+    restart: unless-stopped
     logging:
       driver: "json-file"
       options:
