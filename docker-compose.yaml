@@ -161,8 +161,8 @@ services:
       - PRIVATE_KEY_ROTATION_GRACE_PERIOD=14400 # 4 hours
       # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
       # Or, you can leverage it for local testing.
-      - ENDPOINT=auth.spinnaker.sysdesign.no 
-      - ADMIN_ENDPOINT=auth-admin.spinnaker.sysdesign.no
+      - ENDPOINT=https://auth.spinnaker.sysdesign.no 
+      - ADMIN_ENDPOINT=https://auth-admin.spinnaker.sysdesign.no
     depends_on:
       db:
         condition: service_healthy      
