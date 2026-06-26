@@ -156,14 +156,13 @@ services:
       - 3002:3002
     environment:
       - TRUST_PROXY_HEADER=1
-      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/logto # postgres://postgres:p0stgr3s@postgres:5432/logto
-      # Optional default grace period, in seconds, for OIDC private key rotation when the API
-      # request omits `rotationGracePeriod`.
-      # - PRIVATE_KEY_ROTATION_GRACE_PERIOD
+      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/logto
+      # Optional default grace period, in seconds, for OIDC private key rotation when the API request omits `rotationGracePeriod`.
+      - PRIVATE_KEY_ROTATION_GRACE_PERIOD=14400 # 4 hours
       # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
       # Or, you can leverage it for local testing.
-      #- ENDPOINT=http://localhost:3001
-      #- ADMIN_ENDPOINT=http://localhost:3002
+      - ENDPOINT=auth.spinnaker.sysdesign.no 
+      - ADMIN_ENDPOINT=auth-admin.spinnaker.sysdesign.no
     depends_on:
       db:
         condition: service_healthy      
